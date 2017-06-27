@@ -33,9 +33,9 @@ const (
 	// the subscription query
 	evtSubscribeActionDeliver = 1
 
-	// evtRenderEventXml instructs procEvtRender
+	// evtRenderEventXML instructs procEvtRender
 	// to render the event details as a XML string
-	evtRenderEventXml = 1
+	evtRenderEventXML = 1
 )
 
 var (
@@ -60,14 +60,14 @@ type EventSubscription struct {
 	Errors          chan error
 	Callback        EventCallback
 
-	winApiHandle windows.Handle
+	winAPIHandle windows.Handle
 }
 
 // Create will setup an event subscription in the
 // windows kernel with the provided channel and
 // event query
 func (evtSub *EventSubscription) Create() error {
-	if evtSub.winApiHandle != 0 {
+	if evtSub.winAPIHandle != 0 {
 		return fmt.Errorf("windows_events: subscription already created in kernel")
 	}
 
@@ -94,25 +94,25 @@ func (evtSub *EventSubscription) Create() error {
 
 	if handle == 0 {
 		return fmt.Errorf("windows_events: failed to subscribe to events: %s", err)
-	} else {
-		evtSub.winApiHandle = windows.Handle(handle)
-		return nil
 	}
+
+	evtSub.winAPIHandle = windows.Handle(handle)
+	return nil
 }
 
 // Close tells the windows kernel to let go
 // of the event subscription handle as we
 // are now done with it
 func (evtSub *EventSubscription) Close() error {
-	if evtSub.winApiHandle == 0 {
+	if evtSub.winAPIHandle == 0 {
 		return fmt.Errorf("windows_events: no subscription to close")
 	}
 
-	if returnCode, _, err := procEvtClose.Call(uintptr(evtSub.winApiHandle)); returnCode == 0 {
+	if returnCode, _, err := procEvtClose.Call(uintptr(evtSub.winAPIHandle)); returnCode == 0 {
 		return fmt.Errorf("windows_events: encountered error while closing event handle: %s", err)
 	}
 
-	evtSub.winApiHandle = 0
+	evtSub.winAPIHandle = 0
 	return nil
 }
 
@@ -131,7 +131,7 @@ func (evtSub *EventSubscription) winAPICallback(action, userContext, event uintp
 		bufferUsed := uint16(0)
 		propertyCount := uint16(0)
 
-		returnCode, _, err := procEvtRender.Call(0, event, evtRenderEventXml, 4096, uintptr(unsafe.Pointer(&renderSpace[0])), uintptr(unsafe.Pointer(&bufferUsed)), uintptr(unsafe.Pointer(&propertyCount)))
+		returnCode, _, err := procEvtRender.Call(0, event, evtRenderEventXML, 4096, uintptr(unsafe.Pointer(&renderSpace[0])), uintptr(unsafe.Pointer(&bufferUsed)), uintptr(unsafe.Pointer(&propertyCount)))
 
 		if returnCode == 0 {
 			evtSub.Errors <- fmt.Errorf("windows_event: failed to render event data: %s", err)
