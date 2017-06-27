@@ -22,7 +22,7 @@ func main() {
 		Query:           "*[EventData[Data[@Name='LogonType']='2'] and System[(EventID=4624)]]", // Successful interactive logon events
 		SubscribeMethod: windows_events.EvtSubscribeToFutureEvents,
 		Errors:          errorsChan,
-		Callback:        EventCallback,
+		Callback:        eventCallback,
 	}
 
 	if err := eventSubscription.Create(); err != nil {
@@ -48,7 +48,7 @@ func interruptHandle() {
 	close(errorsChan)
 }
 
-func EventCallback(event *windows_events.Event) {
+func eventCallback(event *windows_events.Event) {
 	targetDomain := event.FindEventData("TargetDomainName")
 	targetUser := event.FindEventData("TargetUserName")
 
