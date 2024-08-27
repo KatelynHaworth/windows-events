@@ -4,9 +4,10 @@ import "C"
 import (
 	"encoding/xml"
 	"fmt"
-	"golang.org/x/sys/windows"
 	"syscall"
 	"unsafe"
+
+	"golang.org/x/sys/windows"
 )
 
 const (
@@ -127,11 +128,14 @@ func (evtSub *EventSubscription) winAPICallback(action, userContext, event uintp
 		evtSub.Errors <- fmt.Errorf("windows_events: encountered error during callback: Win32 Error %x", uint16(event))
 
 	case evtSubscribeActionDeliver:
+		// See https://learn.microsoft.com/en-us/windows/win32/api/winevt/nf-winevt-evtrender
 		renderSpace := make([]uint16, 4096)
-		bufferUsed := uint16(0)
-		propertyCount := uint16(0)
+		bufferSize := (len(renderSpace) - 1) * 2 // The buffer size in bytes, allowing for extra null-terminator
+		bufferUsed := uint32(0)                  // A Windows DWORD (32 bit)
+		propertyCount := uint32(0)               // A Windows DWORD (32 bit)
 
-		returnCode, _, err := procEvtRender.Call(0, event, evtRenderEventXML, 4096, uintptr(unsafe.Pointer(&renderSpace[0])), uintptr(unsafe.Pointer(&bufferUsed)), uintptr(unsafe.Pointer(&propertyCount)))
+		returnCode, _, err := procEvtRender.Call(0, event, evtRenderEventXML, uintptr(bufferSize), uintptr(unsafe.Pointer(&renderSpace[0])),
+			uintptr(unsafe.Pointer(&bufferUsed)), uintptr(unsafe.Pointer(&propertyCount)))
 
 		if returnCode == 0 {
 			evtSub.Errors <- fmt.Errorf("windows_event: failed to render event data: %s", err)
